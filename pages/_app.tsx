@@ -5,24 +5,27 @@ import { RainbowKitProvider, getDefaultWallets } from '@rainbow-me/rainbowkit';
 import { chain, configureChains, createClient, WagmiConfig } from 'wagmi';
 import { alchemyProvider } from 'wagmi/providers/alchemy';
 import { publicProvider } from 'wagmi/providers/public';
+import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
+import Header from '../components/Header';
+import { useEffect, useState } from 'react';
+import Footer from '../components/Footer';
+
 
 const { chains, provider, webSocketProvider } = configureChains(
   [
+    chain.hardhat,
+    chain.localhost,
     chain.mainnet,
     chain.polygon,
-    chain.optimism,
     chain.arbitrum,
-    ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === 'true'
-      ? [chain.goerli]
-      : []),
+    chain.optimism,
   ],
   [
-    alchemyProvider({
-      // This is Alchemy's default API key.
-      // You can get your own at https://dashboard.alchemyapi.io
-      apiKey: '_gg7wSSi0KMBsdKnGVfHDueq6xMB9EkC',
+    jsonRpcProvider({
+      rpc: (chain) => ({
+        http: `http://127.0.0.1:8545`,
+      })
     }),
-    publicProvider(),
   ]
 );
 
@@ -39,13 +42,26 @@ const wagmiClient = createClient({
 });
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const [showChild, setShowChild] = useState(false);
+  useEffect(() => {
+    setShowChild(true);
+  }, []);
+
+  if (!showChild) {
+    return null;
+  }
+
+
   return (
     <WagmiConfig client={wagmiClient}>
-      <RainbowKitProvider chains={chains}>
+      <RainbowKitProvider coolMode chains={chains}>
+        <Header />
         <Component {...pageProps} />
+        <Footer />
       </RainbowKitProvider>
     </WagmiConfig>
   );
+
 }
 
 export default MyApp;
